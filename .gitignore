@@ -1,0 +1,12 @@
+/build/
+/ports/kov_pgm/
+**/__pycache__/
+**/.pytest_cache/
+**/.venv/
+*.bda
+*.elf
+*.o
+*.obj
+*.log
+*.pyc
+*.pyo

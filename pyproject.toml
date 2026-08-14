@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "h1-bda-sdk"
+version = "0.1.0a1"
+description = "Independent native BDA SDK for the BBK H1"
+requires-python = ">=3.10"
+dependencies = ["Pillow>=10"]
+
+[project.scripts]
+h1-bda-build = "h1_bda.build:main"
+h1-bda-validate = "h1_bda.validate:main"
+
+[tool.setuptools]
+packages = ["h1_bda"]
