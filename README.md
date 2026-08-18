@@ -1,88 +1,34 @@
 # BBK H1 Native BDA SDK
 
-This project is an independent native BDA SDK for the BBK H1 (`Y100`) firmware.
-It builds freestanding MIPS little-endian applications for the H1 BDA loader and
-tracks every public API back to H1-specific static and dynamic evidence.
+这是一个独立的 BBK H1（`Y100`）原生 BDA SDK，面向 MIPS little-endian
+freestanding 应用。公开 API 都回溯到 H1 专用的静态证据和可观察测试；尚未完成实机验证的候选 API 仍放在 `reverse/`。
 
-The project is under active reverse engineering. Firmware addresses, candidate
-APIs, probes, and uncertain structure layouts remain under `reverse/`; only APIs
-that complete an observable test in the H1 emulator are promoted to
-`sdk/include/`.
+## 已验证运行时模型
 
-## Confirmed H1 Runtime Model
+- CPU 代码是 MIPS32 little-endian 平面镜像，正常应用从 `0x83C00020` 加载。
+- `0x83C00000..0x83C0001F` 由固件在调用前初始化，包含五个服务表指针。
+- BDA 头选择文件 payload 偏移，不声明运行时加载地址。
+- 对话框、堆内存、文件系统、RGB565 图形和 80 Hz 单调时钟均通过独立模拟器探针。
+- 公开头文件位于 `sdk/include/`，逆向探针和候选布局位于 `reverse/`。
 
-- CPU code is MIPS32 little-endian and is loaded as a flat image, not ELF.
-- A normal application payload is loaded at `0x83C00020` and called there.
-- `0x83C00000..0x83C0001F` is initialized by the H1 firmware before the call.
-- Five H1 service-table pointers are available at `0x83C00004..0x83C00014`.
-- The BDA header selects the file payload offset but does not contain a runtime
-  load address.
-- The first standalone probe has executed in the ARM64-hosted H1 emulator,
-  displayed the firmware modal dialog, and returned cleanly to the desktop.
-  The verified message-box subset is public in `sdk/include/h1_dialogs.h`.
-- The H1 heap `alloc/free/calloc/realloc` entries have passed an independent
-  zero-fill and resize-preservation probe and are public in
-  `sdk/include/h1_memory.h`.
-- Seven stdio-like filesystem entries passed a bounded binary round-trip,
-  seek/tell, removal, and clean-return probe and are public in
-  `sdk/include/h1_filesystem.h`.
-- The H1 RGB565 rectangle blit, readback, and display-present entries passed an
-  exact 17,920-pixel round-trip probe and are public in
-  `sdk/include/h1_graphics.h`.
-- The H1 full-keyboard queue, 80 Hz monotonic tick, and paired 1 ms timer passed
-  a 12-second event/timing probe and are public in `sdk/include/h1_input.h` and
-  `sdk/include/h1_time.h`.
+构建器支持单源探针和多源原生应用，也支持把一张 RGBA PNG 转成 H1 的四种菜单图标资源。
 
-See [reverse/docs/bda_header_and_loader.md](reverse/docs/bda_header_and_loader.md)
-for the current evidence and unresolved fields.
-
-The H1 menu bitmap header and its nonstandard RGB565-plus-alpha encoding are
-documented in
-[reverse/docs/menu_icon_resources.md](reverse/docs/menu_icon_resources.md).
-
-The factory PCM descriptor lifecycle and `SYS+0x50..0x68` service family are
-documented in [reverse/docs/audio_api.md](reverse/docs/audio_api.md). Static
-structure recovery is complete; physical-H1 validation is still required
-before this candidate API is promoted into `sdk/include/`.
-
-The structure-aware emulator deployment flow is documented in
-[docs/emulator_deployment.md](docs/emulator_deployment.md). It preserves the
-retained NAND baseline and verifies modified FAT/FTL data before QEMU restarts.
-
-The compiler/packer supports both single-source probes and multi-source native
-applications. This is the build path used by larger game ports.
-
-One RGBA PNG can be converted into all four H1-specific menu resources during
-the same build:
-
-```powershell
-h1-bda-build app.c --title App --category 0x48 `
-  --icon-png icon.png -o build\App.bda
-```
-
-The source image is contained without aspect-ratio distortion. See
-[docs/verified/custom_icon_build.md](docs/verified/custom_icon_build.md) for
-the exact H1 encodings and round-trip checks.
-
-## Intended Layout
+## 目录
 
 ```text
-sdk/include/       Dynamically verified public H1 API
-h1_bda/            Compiler, packer, icon, and validator implementation
-examples/          Source and built BDA programs that passed emulator tests
-docs/              Developer documentation for verified behavior
-reverse/           H1-only probes, scanners, candidates, and evidence notes
-scripts/           Toolchain setup, verification, and emulator deployment
-tests/             Static format and build regression tests
+sdk/include/       已通过测试的公共 H1 API
+h1_bda/            编译、打包、图标和校验实现
+examples/          已通过模拟器测试的示例
+docs/              验证行为和开发文档
+reverse/           H1 专用探针、扫描器和证据
+scripts/           工具链、验证和模拟器部署脚本
+tests/             格式与构建回归测试
 ```
 
-The repository does not copy a 9588 BDA template or reuse 9588 firmware ABI
-constants. The 9588 SDK is used only as a reference for research discipline,
-verification levels, and project organization.
+仓库不复制 9588 BDA 模板或复用 9588 固件 ABI 常量；9588 SDK 只用于研究方法参考。
 
-## License
+English version: [README.en.md](README.en.md)
 
-Original source code and documentation are licensed under the
-[Apache License 2.0](LICENSE). Verification screenshots and depicted
-third-party interfaces are excluded from that license as described in
-[NOTICE](NOTICE).
+## 许可
+
+原创源代码和文档采用 [Apache License 2.0](LICENSE)。验证截图及其中展示的第三方界面见 [NOTICE](NOTICE)。
